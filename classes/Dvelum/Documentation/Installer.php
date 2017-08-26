@@ -1,5 +1,5 @@
 <?php
-namespace Dvelum\FileStorage;
+namespace Dvelum\Documentation;
 
 use Dvelum\Config\ConfigInterface;
 use Dvelum\App\Session\User;
