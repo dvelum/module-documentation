@@ -1,0 +1,25 @@
+{
+  "name": "dvelum/module-documentation",
+  "version": "2.0.0-dev",
+  "type": "dvelum-module",
+  "description": "API Documentation module for DVelum",
+  "keywords": ["dvelum","docs"],
+  "homepage": "https://github.com/dvelum/module-documentation",
+  "license": "GPL-3.0",
+  "authors": [
+    {
+      "name": "Kirill Yegorov",
+      "email": "kirill@dvelum.com",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/dvelum/module-documentation/issues",
+    "source": "https://github.com/dvelum/module-documentation"
+  },
+  "require": {
+    "php":">=7.1",
+    "oomphinc/composer-installers-extender": "^1.1",
+    "dvelum/dvelum": ">=2.0.0"
+  }
+}
