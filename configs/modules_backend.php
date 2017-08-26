@@ -8,6 +8,6 @@ return [
             'class' => 'Backend_Docs_Controller',
             'designer' => '/system/documentation.designer.dat',
             'in_menu' => true,
-            'icon' => 'i/system/icons/docs.png',
+            'icon' => 'resources/module-documentation/img/docs.png',
         ),
 ];
