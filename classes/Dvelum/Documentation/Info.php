@@ -1,10 +1,33 @@
 <?php
-use Dvelum\Orm;
+/**
+ *  DVelum project https://github.com/dvelum/dvelum
+ *  Copyright (C) 2011-2018  Kirill Yegorov
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+namespace Dvelum\Documentation;
 
-class Sysdocs_Info
+use Dvelum\Orm;
+use Dvelum\Orm\Record;
+use Dvelum\Orm\Model;
+use Dvelum\Utils;
+use \Exception;
+
+class Info
 {
     /**
-     * @var Cache_Interface
+     * @var \Cache_Interface
      */
     protected $cache = false;
     protected $cachePrefix = 'Sysdocs_Info_';
@@ -130,7 +153,7 @@ class Sysdocs_Info
             {
               $cdata = $tree->getItem($id);
 
-              $object = new stdClass();
+              $object = new \stdClass();
               $object->id = $cdata['id'];
               $object->text = $cdata['data'];
              // $object->leaf = true;
@@ -327,7 +350,7 @@ class Sysdocs_Info
       }
       
       try{
-        $o = Orm\Object::factory('sysdocs_localization' , $id);
+        $o = Record::factory('sysdocs_localization' , $id);
         $o->setValues(array(
           'field'=>'description',
           'hid'=>$fileHid,
@@ -350,9 +373,9 @@ class Sysdocs_Info
 
     /**
      * Set cache adapter
-     * @param Cache_Interface $adapter
+     * @param \Cache_Interface $adapter
      */
-    public function setCacheAdapter(Cache_Interface $adapter)
+    public function setCacheAdapter(\Cache_Interface $adapter)
     {
         $this->cache = $adapter;
     }

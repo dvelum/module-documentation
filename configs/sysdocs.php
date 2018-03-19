@@ -2,13 +2,15 @@
 return array(
     'gen_version'=>9,
 	'versions'=>array(
+	   '2.0.0'=>9,
        '1.0.0'=>8
     ),
     'default_languge'=> 'ru',
     'default_version' => '1.0.0',
     'locations'=>array(
         './application',
-		'./dvelum'
+		'./dvelum',
+        './dvelum2'
 	),
     'skip'=>array(
         './application/configs',
@@ -17,7 +19,7 @@ return array(
         './dvelum/templates'
     ),
     'hid_generator' => array(
-        'adapter' => 'Sysdocs_Historyid',
+        'adapter' => '\\Dvelum\\Documentation\\Historyid',
     ),
     'fields' => array(
       'sysdocs_class' => array(

@@ -1,11 +1,36 @@
 <?php
-use Dvelum\Config;
+/**
+ *  DVelum project https://github.com/dvelum/dvelum
+ *  Copyright (C) 2011-2018  Kirill Yegorov
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+namespace Dvelum\Documentation;
 
-class Sysdocs_Controller
+use Dvelum\Config;
+use Dvelum\Config\ConfigInterface;
+use Dvelum\Orm\Model;
+use Dvelum\Lang;
+use Dvelum\Request;
+use Dvelum\Response;
+use Dvelum\Filter;
+
+class Controller
 {
     /**
      * Documentation configuration object
-     * @var Config_Abstract
+     * @var ConfigInterface $docConfig
      */
     protected $docConfig;
     /**
@@ -15,23 +40,23 @@ class Sysdocs_Controller
     protected $version;
     /**
      * Documentation version index
-     * @var integer
+     * @var int $versionIndex
      */
     protected $versionIndex;
     /**
-     * @var Model_Sysdocs_File
+     * @var Model $fileModel
      */
     protected $fileModel;
 
     /**
      * System configuration object
-     * @var Config_Abstract
+     * @var ConfigInterface $configMain
      */
     protected $configMain;
 
     /**
      * Index of first url param
-     * @var integer
+     * @var int
      */
     protected $paramsIndex;
     /**
@@ -54,12 +79,22 @@ class Sysdocs_Controller
     protected $canEdit = false;
     /**
      * Cache adapter
-     * @var Cache_Abstract
+     * @var \Cache_Abstract
      */
     protected $cache = false;
+    /**
+     * @var Request $request
+     */
+    protected $request;
+    /**
+     * @var Response $response
+     */
+    protected $response;
 
     public function __construct($mainConfig , $paramsIndex = 0, $container = false)
     {
+        $this->request = Request::factory();
+        $this->response = Response::factory();
 
         $this->container = $container;
         $this->configMain = Config::storage()->get('main.php');
@@ -67,9 +102,10 @@ class Sysdocs_Controller
         $this->lang = Lang::lang();
         $this->paramsIndex = $paramsIndex;
         $this->docConfig = Config::storage()->get('sysdocs.php');
-        $langDictionary = Dictionary::factory('sysdocs_language');
 
-        $request = Request::getInstance();
+        $langDictionary = \Dictionary::factory('sysdocs_language');
+
+        $request = Request::factory();
 
         $lang = $request->getPart($this->paramsIndex);
         $version = $request->getPart(($this->paramsIndex+1));
@@ -90,7 +126,7 @@ class Sysdocs_Controller
         $this->versionIndex = $vList[$this->version];
 
         // change theme
-        $page = Page::getInstance();
+        $page = \Page::getInstance();
         $page->setTemplatesPath('system/gray/');
     }
     /**
@@ -103,9 +139,9 @@ class Sysdocs_Controller
     }
     /**
      * Set Cache adapter
-     * @param Cache_Abstract $cache
+     * @param \Cache_Abstract $cache
      */
-    public function setCacheAdapter(Cache_Abstract $cache)
+    public function setCacheAdapter(\Cache_Abstract $cache)
     {
         $this->cache = $cache;
     }
@@ -115,13 +151,13 @@ class Sysdocs_Controller
      */
     public function run()
     {
-        $action = Request::getInstance()->getPart(($this->paramsIndex+2));
+        $action = $this->request->getPart(($this->paramsIndex+2));
 
         if($action && method_exists($this, $action.'Action')){
             $this->{$action.'Action'}();
         }else{
-            if(strlen($action) && Request::isAjax()){
-                Response::jsonError(Lang::lang()->get('WRONG_REQUEST').' ' . Request::getInstance()->getUri());
+            if(strlen($action) && $this->request->isAjax()){
+                $this->response->error(Lang::lang()->get('WRONG_REQUEST').' ' . $this->request->getUri());
             }else{
                 $this->indexAction();
             }
@@ -139,7 +175,7 @@ class Sysdocs_Controller
            app.docVersion = "'.$this->version.'";
            var canEdit = '.intval($this->canEdit).';    
       ');
-        $this->_runDesignerProject('./application/configs/dist/layouts/system/documentation.designer.dat', $this->container);
+        $this->runDesignerProject('DVelum/documentation.designer.dat', $this->container);
 
     }
 
@@ -153,20 +189,17 @@ class Sysdocs_Controller
      */
     public function apitreeAction()
     {
-        Response::jsonArray($this->fileModel->getTreeList($this->versionIndex));
+        $this->response->json($this->fileModel->getTreeList($this->versionIndex));
     }
     /**
      * Get class info
      */
     public function infoAction()
     {
-        $fileHid = Request::post('fileHid', Filter::FILTER_STRING, false);
-
-        $info = new Sysdocs_Info();
-
+        $fileHid = $this->request->post('fileHid', Filter::FILTER_STRING, false);
+        $info = new Info();
         $classInfo = $info->getClassInfoByFileHid($fileHid, $this->language , $this->versionIndex);
-
-        Response::jsonSuccess($classInfo);
+        $this->response->success($classInfo);
     }
     /**
      * Set class desctiption
@@ -174,22 +207,25 @@ class Sysdocs_Controller
     public function setdescriptionAction()
     {
         if(!$this->canEdit){
-            Response::jsonError($this->lang->get('CANT_MODIFY'));
+            $this->response->error($this->lang->get('CANT_MODIFY'));
+            return;
         }
-        $fileHid = Request::post('hid', Filter::FILTER_STRING, false);
-        $text = Request::post('text', 'raw', '');
-        $objectId = Request::post('object_id', Filter::FILTER_INTEGER, false);
-        $objectClass = Request::post('object_class', Filter::FILTER_STRING, false);
+        $fileHid = $this->request->post('hid', Filter::FILTER_STRING, false);
+        $text = $this->request->post('text', 'raw', '');
+        $objectId = $this->request->post('object_id', Filter::FILTER_INTEGER, false);
+        $objectClass = $this->request->post('object_class', Filter::FILTER_STRING, false);
 
         if(!$objectId){
-            Response::jsonError($this->lang->get('WRONG_REQUEST'));
+            $this->response->error($this->lang->get('WRONG_REQUEST'));
+            return;
         }
 
-        $info = new Sysdocs_Info();
+        $info = new Info();
         if($info->setDescription($objectId , $fileHid, $this->versionIndex , $this->language , $text , $objectClass)){
-            Response::jsonSuccess();
+            $this->response->success();
+            return;
         }
-        Response::jsonError($this->lang->get('CANT_EXEC'));
+        $this->response->error($this->lang->get('CANT_EXEC'));
     }
     /**
      * Get interface config
@@ -203,7 +239,7 @@ class Sysdocs_Controller
             $preparedVersions[] = array('id'=>$v,'title'=>$v);
         }
 
-        $langs = Dictionary::factory('sysdocs_language')->getData();
+        $langs = \Dictionary::factory('sysdocs_language')->getData();
         $langData = array();
 
         foreach ($langs as $k=>$v){
@@ -217,7 +253,7 @@ class Sysdocs_Controller
             'versions' => $preparedVersions,
         );
 
-        Response::jsonSuccess($result);
+       $this->response->success($result);
     }
 
     /**
@@ -225,7 +261,7 @@ class Sysdocs_Controller
      */
     public function includeScripts()
     {
-        $resource = Resource::getInstance();
+        $resource = \Dvelum\Resource::factory();
 
         $media = Model::factory('Medialib');
         $media->includeScripts();
@@ -234,25 +270,25 @@ class Sysdocs_Controller
         $theme = 'gray';
         $lang = $this->configMain->get('language');
 
-        $resource->addJs('/js/lib/jquery.js', 1 , true , 'head');
-        $resource->addJs('/js/lang/'.$lang.'.js', 1 , true , 'head');
-        $resource->addJs('/js/app/system/common.js', 3 , false ,  'head');
+        $resource->addJs('/js/lib/jquery.js', 1, true, 'head');
+        $resource->addJs('/js/lang/' . $lang . '.js', 1, true, 'head');
+        $resource->addJs('/js/app/system/common.js', 3, false, 'head');
 
-        if($this->configMain->get('development'))
-            $resource->addJs('/js/lib/ext6/build/ext-all-debug.js', 2 , true , 'head');
-        else
-            $resource->addJs('/js/lib/ext6/build/ext-all.js', 2 , true , 'head');
+        if ($this->configMain->get('development')) {
+            $resource->addJs('/js/lib/extjs/build/ext-all-debug.js', 2, true, 'head');
+        } else {
+            $resource->addJs('/js/lib/extjs/build/ext-all.js', 2, true, 'head');
+        }
 
-        $resource->addJs('/js/lib/ext6/build/theme-'.$theme.'/theme-'.$theme.'.js', 3 , true , 'head');
+        $resource->addJs('/js/lib/extjs/build/classic/theme-' . $theme . '/theme-' . $theme . '.js', 3, true, 'head');
+        $resource->addJs('/js/lib/extjs/build/classic/locale/locale-' . $this->configMain->get('language') . '.js', 4, true, 'head');
 
+        $resource->addInlineJs('var developmentMode = ' . intval($this->configMain->get('development')) . ';');
 
-        $resource->addJs('/js/lib/ext6/build/locale/locale-'.$lang.'.js', 4 , true , 'head');
-
-        $resource->addInlineJs('var developmentMode = '.intval($this->configMain->get('development')).';');
-
-        $resource->addCss('/js/lib/ext6/build/theme-'.$theme.'/resources/theme-'.$theme.'-all.css' , 1);
-        $resource->addCss('/css/system/style.css' , 2);
-        $resource->addCss('/css/system/'.$theme.'/style.css' , 3);
+        $resource->addCss('/js/lib/extjs/build/classic/theme-' . $theme . '/resources/theme-' . $theme . '-all.css', 1);
+        $resource->addCss('/css/system/style.css', 2);
+        $resource->addCss('/css/system/' . $theme . '/style.css', 3);
+        $resource->addCss('/resources/dvelum-module-documentation/css/docs.css', 3);
 
         if($cfg->getCount())
         {
@@ -274,23 +310,11 @@ class Sysdocs_Controller
      *
      * @param string $project - path to project file
      */
-    protected function _runDesignerProject($project, $renderTo = false)
+    protected function runDesignerProject($project, $renderTo = false)
     {
-        $manager = new Designer_Manager($this->configMain);
+        $manager = new \Designer_Manager($this->configMain);
+        $project = $manager->findWorkingCopy($project);
         $manager->renderProject($project , $renderTo);
-    }
-
-    /**
-     * Send JSON error message
-     *
-     * @return string
-     */
-    protected function _errorResponse($msg)
-    {
-        if(Request::isAjax())
-            Response::jsonError($msg);
-        else
-            Response::redirect(Request::url(array('index')));
     }
 
     /**
@@ -298,15 +322,16 @@ class Sysdocs_Controller
      */
     public function searchAction()
     {
-        $query = Request::post('search' , Filter::FILTER_STRING , '');
+        $query = $this->request->post('search' , Filter::FILTER_STRING , '');
 
         if(empty($query)){
-            Response::jsonSuccess(array());
+            $this->response->success([]);
+            return;
         }
 
-        $search = new Sysdocs_Search();
+        $search = new Search();
         $result = $search->find($query , $this->versionIndex);
 
-        Response::jsonSuccess($result);
+        $this->response->success($result);
     }
 }
