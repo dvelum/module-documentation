@@ -270,7 +270,6 @@ class Controller
         $theme = 'gray';
         $lang = $this->configMain->get('language');
 
-        $resource->addJs('/js/lib/jquery.js', 1, true, 'head');
         $resource->addJs('/js/lang/' . $lang . '.js', 1, true, 'head');
         $resource->addJs('/js/app/system/common.js', 3, false, 'head');
 

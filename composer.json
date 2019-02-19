@@ -1,6 +1,6 @@
 {
   "name": "dvelum/module-documentation",
-  "version": "2.0.0-dev",
+  "version": "2.0.0",
   "type": "dvelum-module",
   "description": "API Documentation module for DVelum",
   "keywords": ["dvelum","docs"],
@@ -18,7 +18,7 @@
     "source": "https://github.com/dvelum/module-documentation"
   },
   "require": {
-    "php":">=7.1",
+    "php":">=7.2",
     "oomphinc/composer-installers-extender": "^1.1",
     "dvelum/dvelum": ">=2.0.0"
   }

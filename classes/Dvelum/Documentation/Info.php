@@ -142,7 +142,7 @@ class Info
 
           if(!empty($parentList))
           {
-            $classObject = new stdClass();
+            $classObject = new \stdClass();
             $classObject->id = $info['id'];
             $classObject->text = $info['name'];
             //$classObject->leaf = true;

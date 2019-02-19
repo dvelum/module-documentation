@@ -8,6 +8,6 @@ return [
             'class' => '\\Dvelum\\App\\Backend\\Docs\\Controller',
             'designer' => 'DVelum/documentation.designer.dat',
             'in_menu' => true,
-            'icon' => 'resources/module-documentation/img/docs.png',
+            'icon' => 'resources/dvelum-module-documentation/img/docs.png',
         ),
 ];
